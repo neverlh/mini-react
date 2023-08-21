@@ -1,5 +1,6 @@
 {
 	"compileOnSave": true,
+	"include": ["./packages/**/*"],
 	"compilerOptions": {
 		"target": "ESNext",
 		"useDefineForClassFields": true,
@@ -12,8 +13,6 @@
 		"isolatedModules": true,
 		"esModuleInterop": true,
 		"noEmit": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"noImplicitReturns": false,
 		"skipLibCheck": true,
 		"baseUrl": "./packages"
