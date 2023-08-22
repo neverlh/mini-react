@@ -2,13 +2,20 @@ import { Props, Key, Ref } from 'shared/ReactTypes'
 
 import { WorkTags } from './workTags'
 import { FiberFlags, NoFlags } from './fiberFlags'
+import { Container } from './hostConfig'
 
 export class FiberNode {
 	/** 组件 => 实例 标签 => DOM*/
 	stateNode: any = null
 
 	/** 上次更新的Props */
-	memoizedProps: Props
+	memoizedProps: Props = null
+
+	/*** 存放了该fiber节点上的更新信息 */
+	updateQueue: unknown = null
+
+	/** ClassComponent state */
+	memoizedState: any = null
 
 	/**
 	 * 如果是自定义组件则该属性就是和该fiber节点关联的function或class
@@ -48,4 +55,50 @@ export class FiberNode {
 		this.pendingProps = pendingProps
 		this.key = key
 	}
+}
+
+/**
+ * 整个应用根节点
+ */
+export class FiberRootNode {
+	/** 根宿主环境有关 */
+	container: Container
+	/** 指向hostRoot */
+	current: FiberNode
+	/** 已经完成更新的fiber树 */
+	finishedWork: FiberNode | null = null
+
+	constructor(container: Container, hostRootFiber: FiberNode) {
+		this.current = hostRootFiber
+		/** hostRootFiber ==> stateNode  => fiberRootNode*/
+		hostRootFiber.stateNode = this
+		this.container = container
+	}
+}
+
+export const createWorkInProgress = (
+	current: FiberNode,
+	pendingProps: Props
+): FiberNode => {
+	let wip = current.alternate
+
+	if (wip === null) {
+		// mount
+		wip = new FiberNode(current.tag, pendingProps, current.key)
+		wip.stateNode = current.stateNode
+		wip.alternate = current
+		current.alternate = wip
+	} else {
+		// update
+		wip.pendingProps = pendingProps
+		wip.flags = NoFlags
+	}
+
+	wip.type = current.type
+	wip.updateQueue = current.updateQueue
+	wip.child = current.child
+	wip.memoizedProps = current.memoizedProps
+	wip.memoizedState = current.memoizedState
+
+	return wip
 }

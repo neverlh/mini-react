@@ -1,17 +1,43 @@
-import { FiberNode } from './fiber'
+import { FiberNode, FiberRootNode, createWorkInProgress } from './fiber'
 
 import { beginWork } from './beginWork'
 import { completeWork } from './completeWork'
+import { HostRoot } from './workTags'
 
 /** 当前正在工作的fiberNode */
 let workInProgress: null | FiberNode = null
 
-/** 新一轮更新初始化 */
-const prepareFreshStack = (fiber: FiberNode) => {
-	workInProgress = fiber
+/** 调度fiber节点上的更新 => ReactDOM.render setState ReactDOM.createRoot().render() 会触发*/
+export const scheduleUpdateOnFiber = (fiber: FiberNode) => {
+	const root = markUpdateFromFiberToRoot(fiber)
+
+	renderRoot(root)
 }
 
-const renderRoot = (fiber: FiberNode) => {
+/** 将更新冒泡到fiberRootNode上 react每次更新递归都是从fiberRootNode开始 */
+const markUpdateFromFiberToRoot = (fiber: FiberNode) => {
+	let node = fiber
+	let parent = node.return
+
+	while (parent !== null) {
+		node = parent
+		parent = node.return
+	}
+
+	/** 见fiberRootNode结构 */
+	if (node.tag === HostRoot) {
+		return node.stateNode
+	}
+
+	return null
+}
+
+/** 新一轮更新初始化 */
+const prepareFreshStack = (root: FiberRootNode) => {
+	workInProgress = createWorkInProgress(root.current, {})
+}
+
+const renderRoot = (fiber: FiberRootNode) => {
 	prepareFreshStack(fiber)
 
 	do {
