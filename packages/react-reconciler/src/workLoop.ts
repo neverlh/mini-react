@@ -37,18 +37,26 @@ const prepareFreshStack = (root: FiberRootNode) => {
 	workInProgress = createWorkInProgress(root.current, {})
 }
 
-const renderRoot = (fiber: FiberRootNode) => {
-	prepareFreshStack(fiber)
+const renderRoot = (root: FiberRootNode) => {
+	prepareFreshStack(root)
 
 	do {
 		try {
 			workLoop()
 			break
 		} catch (e) {
-			console.warn(e)
+			if (__DEV__) {
+				console.warn('workLoop发生错误', e)
+			}
 			workInProgress = null
 		}
 	} while (true)
+
+	const finishedWork = root.current.alternate
+	root.finishedWork = finishedWork
+
+	// 进入commit阶段
+	// commitRoot(root)
 }
 
 const workLoop = () => {
