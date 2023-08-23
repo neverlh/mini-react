@@ -14,7 +14,7 @@ export class FiberNode {
 	/*** 存放了该fiber节点上的更新信息 */
 	updateQueue: unknown = null
 
-	/** ClassComponent state */
+	/** ClassComponent => state FC => Hooks链表 */
 	memoizedState: any = null
 
 	/**
