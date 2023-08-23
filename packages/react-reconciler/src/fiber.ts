@@ -1,8 +1,8 @@
+import { Container } from 'hostConfig'
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
 
 import { FuntionComponent, HostComponent, WorkTags } from './workTags'
 import { FiberFlags, NoFlags } from './fiberFlags'
-import { Container } from './hostConfig'
 
 export class FiberNode {
 	/** 组件 => 实例 标签 => DOM*/

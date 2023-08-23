@@ -3,6 +3,8 @@ import { FiberNode, FiberRootNode, createWorkInProgress } from './fiber'
 import { beginWork } from './beginWork'
 import { completeWork } from './completeWork'
 import { HostRoot } from './workTags'
+import { MutationMask, NoFlags } from './fiberFlags'
+import { commitMutationEffect } from './commitWork'
 
 /** 当前正在工作的fiberNode */
 let workInProgress: null | FiberNode = null
@@ -56,7 +58,37 @@ const renderRoot = (root: FiberRootNode) => {
 	root.finishedWork = finishedWork
 
 	// 进入commit阶段
-	// commitRoot(root)
+	commitRoot(root)
+}
+
+const commitRoot = (root: FiberRootNode) => {
+	const finishedWork = root.finishedWork
+
+	if (finishedWork === null) {
+		return
+	}
+
+	if (__DEV__) {
+		console.warn('commit阶段开始', finishedWork)
+	}
+
+	root.finishedWork = null
+
+	// 判断整颗fiber树是否有副作用
+	const subtreeHasEffect =
+		(finishedWork.subtreeFlags & MutationMask) !== NoFlags
+	const rootHasFlags = (finishedWork.flags & MutationMask) !== NoFlags
+
+	if (subtreeHasEffect || rootHasFlags) {
+		// beforeMutation
+
+		// Mutation Placement
+		commitMutationEffect(finishedWork)
+		root.current = finishedWork
+		// layout
+	} else {
+		root.current = finishedWork
+	}
 }
 
 const workLoop = () => {

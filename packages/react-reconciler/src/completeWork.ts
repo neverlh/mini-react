@@ -1,7 +1,11 @@
-import { createInstance, createTextInstance } from 'hostConfig'
+import {
+	createInstance,
+	createTextInstance,
+	appendInitialChild,
+	Container
+} from 'hostConfig'
 import { FiberNode } from './fiber'
 import { HostComponent, HostRoot, HostText } from './workTags'
-import { appendInitialChild } from './hostConfig'
 
 /**
  * reconciler中递归的归阶段
@@ -44,7 +48,7 @@ export const completeWork = (wip: FiberNode) => {
 }
 
 /** 将fiber节点下所有instance(浏览器环境即DOM)连接 这样monut时只需要做一次Placement操作 */
-const appendAllChildren = (parent: Element, wip: FiberNode) => {
+const appendAllChildren = (parent: Container, wip: FiberNode) => {
 	let node = wip.child
 
 	while (node !== null) {
