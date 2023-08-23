@@ -1,11 +1,11 @@
 export type WorkTags =
-	| typeof FuntionComponent
+	| typeof FunctionComponent
 	| typeof HostRoot
 	| typeof HostComponent
 	| typeof HostText
 
 /** 函数组件FiberNode节点对应的tag */
-export const FuntionComponent = 0
+export const FunctionComponent = 0
 
 /** 根结点FiberNode节点对应的tag */
 export const HostRoot = 3

@@ -5,7 +5,13 @@ import {
 	Container
 } from 'hostConfig'
 import { FiberNode } from './fiber'
-import { HostComponent, HostRoot, HostText } from './workTags'
+import {
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './workTags'
+import { NoFlags } from './fiberFlags'
 
 /**
  * reconciler中递归的归阶段
@@ -16,6 +22,9 @@ export const completeWork = (wip: FiberNode) => {
 
 	switch (wip.tag) {
 		case HostRoot:
+			bubbleProperties(wip)
+			return null
+		case FunctionComponent:
 			bubbleProperties(wip)
 			return null
 		case HostComponent:
@@ -93,7 +102,7 @@ const appendAllChildren = (parent: Container, wip: FiberNode) => {
  * 只用冒泡一级就行，因为我们对每层的节点都会进行该操作
  */
 const bubbleProperties = (wip: FiberNode) => {
-	let subtreeFlags = wip.subtreeFlags
+	let subtreeFlags = NoFlags
 
 	let child = wip.child
 

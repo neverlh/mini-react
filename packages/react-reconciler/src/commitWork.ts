@@ -2,11 +2,11 @@ import { Container } from 'hostConfig'
 import { FiberNode, FiberRootNode } from './fiber'
 import { MutationMask, NoFlags, Placement } from './fiberFlags'
 import { HostComponent, HostRoot, HostText } from './workTags'
-import { appendChildToContainer } from '../../react-dom/src/hostConfig'
+import { appendChildToContainer } from 'hostConfig'
 
 let nextEffect: FiberNode | null = null
 
-export const commitMutationEffect = (finishedWork: FiberNode) => {
+export const commitMutationEffects = (finishedWork: FiberNode) => {
 	nextEffect = finishedWork
 
 	while (nextEffect !== null) {
@@ -20,7 +20,7 @@ export const commitMutationEffect = (finishedWork: FiberNode) => {
 		} else {
 			// 向上遍历
 			up: while (nextEffect !== null) {
-				commitMutationEffectOnFiber(nextEffect)
+				commitMutationEffectsOnFiber(nextEffect)
 
 				const sibling: FiberNode | null = nextEffect.sibling
 
@@ -35,7 +35,7 @@ export const commitMutationEffect = (finishedWork: FiberNode) => {
 	}
 }
 
-const commitMutationEffectOnFiber = (finishedWork: FiberNode) => {
+const commitMutationEffectsOnFiber = (finishedWork: FiberNode) => {
 	const flags = finishedWork.flags
 
 	// Placement

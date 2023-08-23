@@ -1,7 +1,7 @@
 import { Container } from 'hostConfig'
 import { Props, Key, Ref, ReactElementType } from 'shared/ReactTypes'
 
-import { FuntionComponent, HostComponent, WorkTags } from './workTags'
+import { FunctionComponent, HostComponent, WorkTags } from './workTags'
 import { FiberFlags, NoFlags } from './fiberFlags'
 
 export class FiberNode {
@@ -108,7 +108,7 @@ export const createWorkInProgress = (
 export const createFiberFormElement = (element: ReactElementType) => {
 	const { type, key, props } = element
 
-	let fiberTag: WorkTags = FuntionComponent
+	let fiberTag: WorkTags = FunctionComponent
 
 	if (typeof type === 'string') {
 		fiberTag = HostComponent

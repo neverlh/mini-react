@@ -27,7 +27,7 @@ const childReconciler = (shouldTrackEffects: boolean) => {
 		currentFiber: FiberNode | null,
 		content: string | number
 	) => {
-		const fiber = new FiberNode(HostText, content, null)
+		const fiber = new FiberNode(HostText, { content }, null)
 		fiber.return = returnFiber
 		return fiber
 	}
@@ -77,6 +77,6 @@ const childReconciler = (shouldTrackEffects: boolean) => {
 	return reconcileChildFibers
 }
 
-export const reconcileChildFibers = childReconciler(false)
+export const reconcileChildFibers = childReconciler(true)
 
-export const mountChildFiber = childReconciler(true)
+export const mountChildFiber = childReconciler(false)
