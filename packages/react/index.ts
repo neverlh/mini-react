@@ -1,4 +1,4 @@
-import { jsxDEV } from './src/jsx'
+import { createElement } from './src/jsx'
 import currentDispatcher, {
 	Dispatcher,
 	resolveDispatcher
@@ -16,5 +16,5 @@ export const useState: Dispatcher['useState'] = (initialState) => {
 
 export default {
 	version: '0.0.0',
-	createElement: jsxDEV
+	createElement
 }

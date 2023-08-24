@@ -26,6 +26,13 @@ export function jsx(
 			continue
 		}
 
+		if (propName === 'ref') {
+			if (val !== undefined) {
+				ref = val
+			}
+			continue
+		}
+
 		if (hasOwnProperty.call(config, propName)) {
 			props[propName] = val
 		}

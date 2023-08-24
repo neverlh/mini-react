@@ -27,6 +27,14 @@ export const createTextInstance = (content: any) => {
 
 export const appendChildToContainer = appendInitialChild
 
+export const insertChildToContainer = (
+	child: Instance,
+	container: Instance | Container,
+	before: Instance
+) => {
+	container.insertBefore(child, before)
+}
+
 export const removeChild = (
 	child: Instance | TextInstance,
 	container: Container

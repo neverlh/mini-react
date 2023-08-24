@@ -39,7 +39,7 @@ export class FiberNode {
 	/** 兄弟节点 */
 	sibling: FiberNode | null = null
 
-	/** 对应子节点的数组下标 */
+	/** 对应父节点中child的数组下标 */
 	index: number = 0
 
 	/** 副作用 代表本次更新是新增、删除、更新 */
@@ -109,7 +109,7 @@ export const createWorkInProgress = (
 	return wip
 }
 
-export const createFiberFormElement = (element: ReactElementType) => {
+export const createFiberFromElement = (element: ReactElementType) => {
 	const { type, key, props } = element
 
 	let fiberTag: WorkTags = FunctionComponent
