@@ -85,6 +85,7 @@ const commitRoot = (root: FiberRootNode) => {
 		// Mutation Placement
 		commitMutationEffects(finishedWork)
 		root.current = finishedWork
+
 		// layout
 	} else {
 		root.current = finishedWork

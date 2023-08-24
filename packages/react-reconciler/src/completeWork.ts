@@ -11,7 +11,11 @@ import {
 	HostRoot,
 	HostText
 } from './workTags'
-import { NoFlags } from './fiberFlags'
+import { NoFlags, Update } from './fiberFlags'
+
+const markUpdate = (fiber: FiberNode) => {
+	fiber.flags |= Update
+}
 
 /**
  * reconciler中递归的归阶段
@@ -42,6 +46,13 @@ export const completeWork = (wip: FiberNode) => {
 		case HostText:
 			if (current !== null && wip.stateNode) {
 				// update
+				const oldText = current.memoizedProps.content
+				const newText = newProps.content
+
+				// 内容更新 标记Update
+				if (oldText !== newText) {
+					markUpdate(wip)
+				}
 			} else {
 				const instance = createTextInstance(newProps.content)
 				wip.stateNode = instance

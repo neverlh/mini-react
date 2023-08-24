@@ -5,7 +5,7 @@ import { FunctionComponent, HostComponent, WorkTags } from './workTags'
 import { FiberFlags, NoFlags } from './fiberFlags'
 
 export class FiberNode {
-	/** 组件 => 实例 标签 => DOM*/
+	/** 组件 => 实例 标签 => DOM hostRoot => fiberRootNode*/
 	stateNode: any = null
 
 	/** 上次更新的Props */
@@ -46,6 +46,8 @@ export class FiberNode {
 	flags: FiberFlags = NoFlags
 	/** 子树副作用合集 */
 	subtreeFlags: FiberFlags = NoFlags
+	/** 删除子fiber合集 */
+	deletions: FiberNode[] | null = null
 
 	constructor(
 		public tag: WorkTags,
@@ -94,6 +96,8 @@ export const createWorkInProgress = (
 		// update
 		wip.pendingProps = pendingProps
 		wip.flags = NoFlags
+		wip.subtreeFlags = NoFlags
+		wip.deletions = null
 	}
 
 	wip.type = current.type
