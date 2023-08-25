@@ -3,6 +3,7 @@ export type WorkTags =
 	| typeof HostRoot
 	| typeof HostComponent
 	| typeof HostText
+	| typeof Fragment
 
 /** 函数组件FiberNode节点对应的tag */
 export const FunctionComponent = 0
@@ -15,3 +16,5 @@ export const HostComponent = 5
 
 /** 文本节点FiberNode对应的tag */
 export const HostText = 6
+
+export const Fragment = 7

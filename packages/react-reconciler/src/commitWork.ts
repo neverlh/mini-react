@@ -192,21 +192,46 @@ const insertOrAppendPlacementNodeIntoContainer = (
 	}
 }
 
+const recordHostChildrenToDelete = (
+	childrenToDelete: FiberNode[],
+	unmountFiber: FiberNode
+) => {
+	// 第一个要删除的host root节点
+	const lastOne = childrenToDelete[childrenToDelete.length - 1]
+
+	if (!lastOne) {
+		childrenToDelete.push(unmountFiber)
+	} else {
+		/**
+		 * 例如需要删除fragment下的dom 那就需要删除下面两个div 所以需要找他的兄弟节点都删除掉
+		 * <div>
+		 *  <>
+		 *    <div></div><div></div>
+		 *  <>
+		 * </div>
+		 */
+		let node = lastOne.sibling
+		while (node !== null) {
+			if (node === unmountFiber) {
+				childrenToDelete.push(unmountFiber)
+			}
+			node = node.sibling
+		}
+	}
+}
+
 const commitDeletion = (childToDelete: FiberNode) => {
-	let rootHostNode: FiberNode | null = null
+	// 需要删除的节点可能会有好几个
+	const rootChildrenToDelete: FiberNode[] = []
 
 	// 递归子树 childToDelete的fiber tag有很多类型 不同类型需要不同操作
 	commitNestedComponent(childToDelete, (unmountFiber) => {
 		switch (unmountFiber.tag) {
 			case HostText:
-				if (rootHostNode === null) {
-					rootHostNode = unmountFiber
-				}
+				recordHostChildrenToDelete(rootChildrenToDelete, unmountFiber)
 				return
 			case HostComponent:
-				if (rootHostNode === null) {
-					rootHostNode = unmountFiber
-				}
+				recordHostChildrenToDelete(rootChildrenToDelete, unmountFiber)
 				// TODO解绑Ref
 				return
 			case FunctionComponent:
@@ -220,10 +245,12 @@ const commitDeletion = (childToDelete: FiberNode) => {
 	})
 
 	// 移除rootHostComponent的DOM
-	if (rootHostNode !== null) {
-		const hostParent = getHostParent(rootHostNode)
+	if (rootChildrenToDelete.length) {
+		const hostParent = getHostParent(childToDelete)
 		if (hostParent !== null) {
-			removeChild((rootHostNode as FiberNode).stateNode, hostParent)
+			rootChildrenToDelete.forEach((node) => {
+				removeChild(node.stateNode, hostParent)
+			})
 		}
 	}
 

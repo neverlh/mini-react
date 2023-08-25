@@ -5,7 +5,8 @@ import {
 	FunctionComponent,
 	HostComponent,
 	HostRoot,
-	HostText
+	HostText,
+	Fragment
 } from './workTags'
 import { mountChildFiber, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
@@ -25,6 +26,8 @@ export const beginWork = (wip: FiberNode): FiberNode | null => {
 			return null
 		case FunctionComponent:
 			return updateFunctionComponent(wip)
+		case Fragment:
+			return updateFragment(wip)
 		default:
 			if (__DEV__) {
 				console.warn('beginWork未实现的类型')
@@ -38,6 +41,12 @@ export const beginWork = (wip: FiberNode): FiberNode | null => {
 /** FunctionComponent组件type即是函数本身 */
 const updateFunctionComponent = (wip: FiberNode) => {
 	const nextChildren = renderWithHooks(wip)
+	reconcileChildren(wip, nextChildren)
+	return wip.child
+}
+
+const updateFragment = (wip: FiberNode) => {
+	const nextChildren = wip.pendingProps
 	reconcileChildren(wip, nextChildren)
 	return wip.child
 }

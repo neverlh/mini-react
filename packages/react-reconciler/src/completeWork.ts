@@ -10,7 +10,8 @@ import {
 	FunctionComponent,
 	HostComponent,
 	HostRoot,
-	HostText
+	HostText,
+	Fragment
 } from './workTags'
 import { NoFlags, Update } from './fiberFlags'
 
@@ -27,9 +28,8 @@ export const completeWork = (wip: FiberNode) => {
 
 	switch (wip.tag) {
 		case HostRoot:
-			bubbleProperties(wip)
-			return null
 		case FunctionComponent:
+		case Fragment:
 			bubbleProperties(wip)
 			return null
 		case HostComponent:
