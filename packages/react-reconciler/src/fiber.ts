@@ -8,6 +8,7 @@ import {
 	WorkTags
 } from './workTags'
 import { FiberFlags, NoFlags } from './fiberFlags'
+import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
 
 export class FiberNode {
 	/** 组件 => 实例 标签 => DOM hostRoot => fiberRootNode*/
@@ -76,6 +77,9 @@ export class FiberRootNode {
 	current: FiberNode
 	/** 已经完成更新的fiber树 */
 	finishedWork: FiberNode | null = null
+
+	finishedLane: Lane = NoLane
+	pendingLanes: Lanes = NoLanes
 
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.current = hostRootFiber

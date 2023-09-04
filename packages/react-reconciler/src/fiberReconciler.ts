@@ -10,6 +10,7 @@ import {
 	enqueueUpdate,
 	UpdateQueue
 } from './updateQueue'
+import { requestUpdateLane } from './fiberLanes'
 
 /**
  *
@@ -36,16 +37,15 @@ export const updateContainer = (
 	root: FiberRootNode
 ) => {
 	const hostRootFiber = root.current
-
-	const update = createUpdate<ReactElementType | null>(element)
-
+	const lane = requestUpdateLane()
+	const update = createUpdate<ReactElementType | null>(element, lane)
 	enqueueUpdate(
 		hostRootFiber.updateQueue as UpdateQueue<ReactElementType | null>,
 		update
 	)
 
 	// 调度该fiber节点上的更新
-	scheduleUpdateOnFiber(hostRootFiber)
+	scheduleUpdateOnFiber(hostRootFiber, lane)
 
 	return element
 }
