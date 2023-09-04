@@ -7,8 +7,9 @@ import {
 	HostComponent,
 	WorkTags
 } from './workTags'
-import { FiberFlags, NoFlags } from './fiberFlags'
+import { Flags, NoFlags } from './fiberFlags'
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
+import { Effect } from './fiberHooks'
 
 export class FiberNode {
 	/** 组件 => 实例 标签 => DOM hostRoot => fiberRootNode*/
@@ -17,7 +18,7 @@ export class FiberNode {
 	/** 上次更新的Props */
 	memoizedProps: Props = null
 
-	/*** 存放了该fiber节点上的更新信息 */
+	/** 存放了该fiber节点上的更新信息 hostComponent => [key,value]dom节点的属性变化 FC => effect列表 */
 	updateQueue: unknown = null
 
 	/** ClassComponent => state FC => Hooks链表 */
@@ -49,9 +50,9 @@ export class FiberNode {
 	index: number = 0
 
 	/** 副作用 代表本次更新是新增、删除、更新 */
-	flags: FiberFlags = NoFlags
+	flags: Flags = NoFlags
 	/** 子树副作用合集 */
-	subtreeFlags: FiberFlags = NoFlags
+	subtreeFlags: Flags = NoFlags
 	/** 删除子fiber合集 */
 	deletions: FiberNode[] | null = null
 
@@ -67,6 +68,11 @@ export class FiberNode {
 	}
 }
 
+export interface PendingPassiveEffects {
+	unmount: Effect[]
+	update: Effect[]
+}
+
 /**
  * 整个应用根节点
  */
@@ -80,6 +86,12 @@ export class FiberRootNode {
 
 	finishedLane: Lane = NoLane
 	pendingLanes: Lanes = NoLanes
+
+	/** mount/update 时所有需要执行的effect */
+	pendingPassiveEffects: PendingPassiveEffects = {
+		unmount: [],
+		update: []
+	}
 
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.current = hostRootFiber

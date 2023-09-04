@@ -15,6 +15,11 @@ export const useState: Dispatcher['useState'] = (initialState) => {
 	return dispatcher.useState(initialState)
 }
 
+export const useEffect: Dispatcher['useEffect'] = (callback, deps) => {
+	const dispatcher = resolveDispatcher()
+	return dispatcher.useEffect(callback, deps)
+}
+
 export default {
 	version: '0.0.0',
 	createElement
