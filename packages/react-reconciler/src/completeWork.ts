@@ -4,7 +4,6 @@ import {
 	appendInitialChild,
 	Container
 } from 'hostConfig'
-import { updateFiberProps } from 'react-dom/src/SyntheticEvent'
 import { FiberNode } from './fiber'
 import {
 	FunctionComponent,
@@ -34,27 +33,11 @@ export const completeWork = (wip: FiberNode) => {
 			return null
 		case HostComponent:
 			if (current !== null && wip.stateNode) {
-				// update
-				// TODO props是否变化
-
-				/**
-				 * 更新fiber属性，ReactDOM事件系统能正常工作的关键
-				 * 比如如下代码
-				 * const Foo = () => {
-				 *   const [count, setCount] = useState(0)
-				 *
-				 *   return <div onClick={() => {
-				 *              setCount(count + 1)
-				 *           }}>{count}</div>
-				 * }
-				 * 如果不更新props的话，ReactDOM中事件机制执行时
-				 * 从dom对应fiber提取到的onClick事件的handler将永远是首次mount时
-				 * 的handler，这意味着他闭包中捕获到的count值永远都是0,所以不管你点击多少次div
-				 * 他都等价于setCount(0 + 1),所以会导致不能正常更新
-				 * 而调用了下面的updateFiberProps就不一样了，每次更新后handler里面闭包捕获到的count
-				 * 都是最新值所以能正常更新
-				 */
-				updateFiberProps(wip.stateNode, newProps)
+				// TODO update
+				// 1. props是否变化 {onClick: xx} {onClick: xxx}
+				// 2. 变了 Update flag
+				// className style
+				markUpdate(wip)
 			} else {
 				// 构建dom
 				const instance = createInstance(wip.type, newProps)

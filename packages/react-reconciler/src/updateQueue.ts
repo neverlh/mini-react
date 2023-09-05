@@ -1,6 +1,6 @@
 import { Dispatch } from 'react/currentDispatcher'
 import { Action } from 'shared/ReactTypes'
-import { Lane, NoLane } from './fiberLanes'
+import { isSubsetOfLanes, Lane, NoLane } from './fiberLanes'
 
 export interface Update<State> {
 	action: Action<State>
@@ -62,38 +62,71 @@ export const processUpdateQueue = <State>(
 	renderLane: Lane
 ): {
 	memoizedState: State
+	baseState: State
+	baseQueue: Update<State> | null
 } => {
 	const result: ReturnType<typeof processUpdateQueue<State>> = {
-		memoizedState: baseState
+		memoizedState: baseState,
+		baseState,
+		baseQueue: null
 	}
 
 	if (pendingUpdate !== null) {
 		const first = pendingUpdate.next
 		let pending = pendingUpdate.next as Update<any>
 
+		let newBaseState = baseState
+		let newBaseQueueFirst: Update<State> | null = null
+		let newBaseQueueLast: Update<State> | null = null
+		let newState = baseState
+
 		do {
 			const updateLane = pending.lane
 
-			if (updateLane === renderLane) {
-				const action = pendingUpdate.action
-
-				if (action instanceof Function) {
-					// action => (perState) => state
-					baseState = action(baseState)
+			if (!isSubsetOfLanes(renderLane, updateLane)) {
+				// 优先级不够 被跳过
+				const clone = createUpdate(pending.action, updateLane)
+				if (newBaseQueueFirst === null) {
+					// 第一个被跳过的
+					newBaseQueueFirst = clone
+					newBaseQueueLast = clone
+					// 第一个被跳过前的state作为下次更新的baseState
+					newBaseState = newState
 				} else {
-					// action => state
-					baseState = action
+					;(newBaseQueueLast as Update<any>).next = clone
+					newBaseQueueLast = clone
 				}
 			} else {
-				if (__DEV__) {
-					console.error('不应该进入updateLane !== renderLane逻辑')
+				if (newBaseQueueLast !== null) {
+					// 之前存在被跳过的 往后所有的都需要保存 并且NoLane，供下一次消费全部消费掉
+					const clone = createUpdate(pending.action, NoLane)
+					newBaseQueueLast.next = clone
+					newBaseQueueLast = clone
+				}
+
+				const action = pendingUpdate.action
+				if (action instanceof Function) {
+					// action => (perState) => state
+					newState = action(newState)
+				} else {
+					// action => state
+					newState = action
 				}
 			}
 
 			pending = pending.next as Update<any>
 		} while (pending !== first)
+
+		if (newBaseQueueLast === null) {
+			// 本次计算没有update被跳过
+			newBaseState = newState
+		} else {
+			newBaseQueueLast.next = newBaseQueueFirst
+		}
+		result.memoizedState = newState
+		result.baseState = newBaseState
+		result.baseQueue = newBaseQueueLast
 	}
 
-	result.memoizedState = baseState
 	return result
 }

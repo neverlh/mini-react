@@ -338,7 +338,7 @@ export const commitHookEffectList = (
 	let effect = lastEffect.next as Effect
 
 	do {
-		// 找到对应需要执行的effect
+		// 找到对应需要执行的effect (effect.tag & flags) === flags表示当前effect tag中是否包含flags 包含的话 就得执行callback
 		if ((effect.tag & flags) === flags) {
 			callback(effect)
 		}

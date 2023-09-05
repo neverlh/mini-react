@@ -1,6 +1,7 @@
 import internals from 'shared/internals'
 import { FiberNode } from './fiber'
 import {
+	Update,
 	UpdateQueue,
 	createUpdate,
 	createUpdateQueue,
@@ -18,7 +19,7 @@ import { HookHasEffect, Passive } from './hookEffectTags'
 let currentlyRenderingFiber: FiberNode | null = null
 /** 当前正在执行的hook */
 let workInProgressHook: Hook | null = null
-/** update正在执行的hook => workInProgressHook */
+/** current hook => workInProgressHook */
 let currentHook: Hook | null = null
 /** 当前render的lane */
 let renderLane: Lane = NoLane
@@ -29,6 +30,8 @@ interface Hook {
 	memoizedState: any
 	updateQueue: unknown
 	next: Hook | null
+	baseState: any
+	baseQueue: Update<any> | null
 }
 
 type EffectCallback = () => void
@@ -127,7 +130,9 @@ const mountWorkInProgressHook = (): Hook => {
 	const hook = {
 		memoizedState: null,
 		updateQueue: null,
-		next: null
+		next: null,
+		baseState: null,
+		baseQueue: null
 	}
 
 	if (workInProgressHook === null) {
@@ -222,14 +227,39 @@ const updateState = <State>(): [State, Dispatch<State>] => {
 	const queue = hook.updateQueue as UpdateQueue<State>
 	const pending = queue.shared.pending
 
+	const current = currentHook as Hook
+	const baseState = current.baseState
+	let baseQueue = current.baseQueue
+
 	if (pending !== null) {
-		const { memoizedState } = processUpdateQueue(
-			hook.memoizedState,
-			pending,
-			renderLane
-		)
-		hook.memoizedState = memoizedState
+		if (baseQueue !== null) {
+			// 将baseQueue与pending连接
+			// baseQueue b2 -> b0 -> b1 -> b2
+			// pendingQueue p2 -> p0 -> p1 -> p2
+			// b0
+			const baseFirst = baseQueue.next
+			// p0
+			const pendingFirst = pending.next
+			// b2 -> p0
+			baseQueue.next = pendingFirst
+			// p2 -> b0
+			pending.next = baseFirst
+			// p2 -> b0 -> b1 -> b2 -> p0 -> p1 -> p2
+		}
+
+		baseQueue = pending
+		// 保存在current中 打断可以重新取出来
+		current.baseQueue = baseQueue
 		queue.shared.pending = null
+
+		const {
+			memoizedState,
+			baseQueue: newBaseQueue,
+			baseState: newBaseState
+		} = processUpdateQueue(baseState, baseQueue, renderLane)
+		hook.memoizedState = memoizedState
+		hook.baseQueue = newBaseQueue
+		hook.baseState = newBaseState
 	}
 
 	return [hook.memoizedState, queue.dispatch as Dispatch<State>]
@@ -314,7 +344,9 @@ const updateWorkInProgressHook = (): Hook => {
 	const newHook: Hook = {
 		memoizedState: currentHook.memoizedState,
 		updateQueue: currentHook.updateQueue,
-		next: null
+		next: null,
+		baseQueue: currentHook.baseQueue,
+		baseState: currentHook.baseState
 	}
 
 	if (workInProgressHook === null) {

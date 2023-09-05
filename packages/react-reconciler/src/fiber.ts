@@ -10,6 +10,7 @@ import {
 import { Flags, NoFlags } from './fiberFlags'
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes'
 import { Effect } from './fiberHooks'
+import { CallbackNode } from 'scheduler'
 
 export class FiberNode {
 	/** 组件 => 实例 标签 => DOM hostRoot => fiberRootNode*/
@@ -84,8 +85,15 @@ export class FiberRootNode {
 	/** 已经完成更新的fiber树 */
 	finishedWork: FiberNode | null = null
 
+	/** 已经完成任务的lane */
 	finishedLane: Lane = NoLane
+	/** 等待被执行任务的lanes */
 	pendingLanes: Lanes = NoLanes
+
+	/** 当前正在renderer的任务 */
+	callbackNode: CallbackNode | null = null
+	/** 当前正在renderer的任务的优先级 */
+	callbackPriority: Lane = NoLane
 
 	/** mount/update 时所有需要执行的effect */
 	pendingPassiveEffects: PendingPassiveEffects = {
