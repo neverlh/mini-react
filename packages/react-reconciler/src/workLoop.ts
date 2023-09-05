@@ -86,6 +86,13 @@ const ensureRootIsScheduled = (root: FiberRootNode) => {
 
 	let newCallbackNode = null
 
+	if (__DEV__) {
+		console.log(
+			`在${updateLane === SyncLane ? '微' : '宏'}任务中调度，优先级：`,
+			updateLane
+		)
+	}
+
 	if (updateLane === SyncLane) {
 		// 同步优先级 用微任务调度
 		scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root))

@@ -82,6 +82,7 @@ const childReconciler = (shouldTrackEffects: boolean) => {
 					}
 					// type不同 删掉之前所有同级节点
 					deleteRemainingChildren(returnFiber, currentFiber)
+					break
 				} else {
 					if (__DEV__) {
 						console.warn('还未实现的react类型', element)

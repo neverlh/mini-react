@@ -11,6 +11,7 @@ import {
 	UpdateQueue
 } from './updateQueue'
 import { requestUpdateLane } from './fiberLanes'
+import { unstable_runWithPriority, unstable_ImmediatePriority } from 'scheduler'
 
 /**
  *
@@ -36,16 +37,16 @@ export const updateContainer = (
 	element: ReactElementType | null,
 	root: FiberRootNode
 ) => {
-	const hostRootFiber = root.current
-	const lane = requestUpdateLane()
-	const update = createUpdate<ReactElementType | null>(element, lane)
-	enqueueUpdate(
-		hostRootFiber.updateQueue as UpdateQueue<ReactElementType | null>,
-		update
-	)
-
-	// 调度该fiber节点上的更新
-	scheduleUpdateOnFiber(hostRootFiber, lane)
-
+	unstable_runWithPriority(unstable_ImmediatePriority, () => {
+		const hostRootFiber = root.current
+		const lane = requestUpdateLane()
+		const update = createUpdate<ReactElementType | null>(element, lane)
+		enqueueUpdate(
+			hostRootFiber.updateQueue as UpdateQueue<ReactElementType | null>,
+			update
+		)
+		// 调度该fiber节点上的更新
+		scheduleUpdateOnFiber(hostRootFiber, lane)
+	})
 	return element
 }

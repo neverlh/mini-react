@@ -1,4 +1,8 @@
 import internals from 'shared/internals'
+import ReactCurrentBatchConfig from 'react/currentBatchConfig'
+import { Dispatcher, Dispatch } from 'react/currentDispatcher'
+import { Action } from 'shared/ReactTypes'
+
 import { FiberNode } from './fiber'
 import {
 	Update,
@@ -8,8 +12,6 @@ import {
 	enqueueUpdate,
 	processUpdateQueue
 } from './updateQueue'
-import { Dispatcher, Dispatch } from '../../react/currentDispatcher'
-import { Action } from 'shared/ReactTypes'
 import { scheduleUpdateOnFiber } from './workLoop'
 import { Lane, NoLane, requestUpdateLane } from './fiberLanes'
 import { Flags, PassiveEffect } from './fiberFlags'
@@ -102,6 +104,7 @@ const mountState = <State>(
 	const queue = createUpdateQueue<State>()
 	hook.updateQueue = queue
 	hook.memoizedState = memoizedState
+	hook.baseState = memoizedState
 
 	// @ts-ignore
 	const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue)
@@ -214,10 +217,32 @@ const mountEffect = (
 	)
 }
 
+const mountTransition = (): [boolean, (callback: () => void) => void] => {
+	const [isPending, setPending] = mountState(false)
+	const hook = mountWorkInProgressHook()
+	const start = startTransition.bind(null, setPending)
+	hook.memoizedState = start
+	return [isPending, start]
+}
+
+const startTransition = (
+	setPending: Dispatch<boolean>,
+	callback: () => void
+) => {
+	setPending(true)
+	const prevTransition = ReactCurrentBatchConfig.transition
+	// 用于在requestUpdateLane中获取startTransition中setState的优先级
+	ReactCurrentBatchConfig.transition = 1
+	callback()
+	setPending(false)
+	ReactCurrentBatchConfig.transition = prevTransition
+}
+
 /** mount时 hooks集合 */
 const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
-	useEffect: mountEffect
+	useEffect: mountEffect,
+	useTransition: mountTransition
 }
 
 /** update useState */
@@ -251,7 +276,9 @@ const updateState = <State>(): [State, Dispatch<State>] => {
 		// 保存在current中 打断可以重新取出来
 		current.baseQueue = baseQueue
 		queue.shared.pending = null
+	}
 
+	if (baseQueue !== null) {
 		const {
 			memoizedState,
 			baseQueue: newBaseQueue,
@@ -366,7 +393,15 @@ const updateWorkInProgressHook = (): Hook => {
 	return workInProgressHook
 }
 
+const updateTransition = (): [boolean, (callback: () => void) => void] => {
+	const [isPending] = updateState()
+	const hook = updateWorkInProgressHook()
+	const start = hook.memoizedState
+	return [isPending as boolean, start]
+}
+
 const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
-	useEffect: updateEffect
+	useEffect: updateEffect,
+	useTransition: updateTransition
 }
