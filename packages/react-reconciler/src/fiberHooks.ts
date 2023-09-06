@@ -1,7 +1,7 @@
 import internals from 'shared/internals'
-import ReactCurrentBatchConfig from 'react/currentBatchConfig'
-import { Dispatcher, Dispatch } from 'react/currentDispatcher'
-import { Action } from 'shared/ReactTypes'
+import ReactCurrentBatchConfig from 'react/src/currentBatchConfig'
+import { Dispatcher, Dispatch } from 'react/src/currentDispatcher'
+import { Action, ReactContext } from 'shared/ReactTypes'
 
 import { FiberNode } from './fiber'
 import {
@@ -245,12 +245,22 @@ const mountRef = <T>(initialValue: T) => {
 	return ref
 }
 
+/** useContext是不需要依赖hooks列表的 */
+const readContext = <T>(context: ReactContext<T>): T => {
+	const consumer = currentlyRenderingFiber
+	if (consumer === null) {
+		throw new Error('只能在函数组件中调用useContext')
+	}
+	return context._currentValue
+}
+
 /** mount时 hooks集合 */
 const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
 	useEffect: mountEffect,
 	useTransition: mountTransition,
-	useRef: mountRef
+	useRef: mountRef,
+	useContext: readContext
 }
 
 /** update useState */
@@ -417,5 +427,6 @@ const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
 	useEffect: updateEffect,
 	useTransition: updateTransition,
-	useRef: updateRef
+	useRef: updateRef,
+	useContext: readContext
 }

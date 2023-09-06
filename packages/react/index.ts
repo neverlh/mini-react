@@ -2,9 +2,11 @@ import { createElement } from './src/jsx'
 import currentDispatcher, {
 	Dispatcher,
 	resolveDispatcher
-} from './currentDispatcher'
-import currentBatchConfig from './currentBatchConfig'
+} from './src/currentDispatcher'
+import currentBatchConfig from './src/currentBatchConfig'
 export { REACT_FRAGMENT_TYPE as Fragment } from 'shared/ReactSymbols'
+
+export { createContext } from './src/context'
 
 // 共享数据层 在reconciler中 renderWithHooks 赋值当前对应的hooks集合
 export const CURRENT_DISPATCHER = {
@@ -30,6 +32,11 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 export const useRef: Dispatcher['useRef'] = (initialValue) => {
 	const dispatcher = resolveDispatcher()
 	return dispatcher.useRef(initialValue)
+}
+
+export const useContext: Dispatcher['useContext'] = (initialValue) => {
+	const dispatcher = resolveDispatcher()
+	return dispatcher.useContext(initialValue)
 }
 
 export default {

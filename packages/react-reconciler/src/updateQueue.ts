@@ -1,4 +1,4 @@
-import { Dispatch } from 'react/currentDispatcher'
+import { Dispatch } from 'react/src/currentDispatcher'
 import { Action } from 'shared/ReactTypes'
 import { isSubsetOfLanes, Lane, NoLane } from './fiberLanes'
 

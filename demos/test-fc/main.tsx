@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, {
+	useState,
+	useEffect,
+	useRef,
+	createContext,
+	useContext
+} from 'react'
 import ReactDOM from 'react-dom/client'
 
 // function App() {
@@ -112,25 +118,61 @@ import ReactDOM from 'react-dom/client'
 // 	return <li>{children}</li>
 // }
 
+// function App() {
+// 	const [isDel, del] = useState(false)
+// 	const divRef = useRef(null)
+
+// 	console.log('render divRef', divRef.current)
+
+// 	useEffect(() => {
+// 		console.log('useEffect divRef', divRef.current)
+// 	}, [])
+
+// 	return (
+// 		<div ref={divRef} onClick={() => del(true)}>
+// 			{isDel ? null : <Child />}
+// 		</div>
+// 	)
+// }
+
+// function Child() {
+// 	return <p ref={(dom) => console.log('dom is:', dom)}>Child</p>
+// }
+
+const ctxA = createContext('deafult A')
+const ctxB = createContext('default B')
+
 function App() {
-	const [isDel, del] = useState(false)
-	const divRef = useRef(null)
-
-	console.log('render divRef', divRef.current)
-
-	useEffect(() => {
-		console.log('useEffect divRef', divRef.current)
-	}, [])
-
 	return (
-		<div ref={divRef} onClick={() => del(true)}>
-			{isDel ? null : <Child />}
-		</div>
+		<ctxA.Provider value={'A0'}>
+			<ctxB.Provider value={'B0'}>
+				<ctxA.Provider value={'A1'}>
+					<ctxB.Provider value={'B1'}>
+						<ctxA.Provider value={'A2'}>
+							<Cpn />
+						</ctxA.Provider>
+					</ctxB.Provider>
+					<Cpn />
+				</ctxA.Provider>
+			</ctxB.Provider>
+			<Cpn />
+		</ctxA.Provider>
 	)
 }
 
-function Child() {
-	return <p ref={(dom) => console.log('dom is:', dom)}>Child</p>
+function Cpn() {
+	const a = useContext(ctxA)
+	const b = useContext(ctxB)
+	console.log('-------')
+	console.log('a', a)
+	console.log('b', b)
+	console.log('-------')
+
+	return (
+		<div>
+			A: {a} B: {b}
+		</div>
+	)
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />)

@@ -1,4 +1,4 @@
-import { ReactElementType } from 'shared/ReactTypes'
+import { ReactElementType, ReactProviderType } from 'shared/ReactTypes'
 import { FiberNode } from './fiber'
 import { UpdateQueue, processUpdateQueue } from './updateQueue'
 import {
@@ -6,12 +6,14 @@ import {
 	HostComponent,
 	HostRoot,
 	HostText,
-	Fragment
+	Fragment,
+	ContextProvider
 } from './workTags'
 import { mountChildFiber, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
 import { Lane } from './fiberLanes'
 import { Ref } from './fiberFlags'
+import { pushProvider } from './fiberContext'
 
 /**
  * 传入当前Fiber节点，创建子Fiber节点
@@ -33,6 +35,8 @@ export const beginWork = (
 			return updateFunctionComponent(wip, renderLane)
 		case Fragment:
 			return updateFragment(wip)
+		case ContextProvider:
+			return updateContextProvider(wip)
 		default:
 			if (__DEV__) {
 				console.warn('beginWork未实现的类型')
@@ -74,6 +78,17 @@ const updateHostComponent = (wip: FiberNode) => {
 	const nextProps = wip.pendingProps
 	const nextChildren = nextProps.children
 	markRef(wip.alternate, wip)
+	reconcileChildren(wip, nextChildren)
+	return wip.child
+}
+
+const updateContextProvider = (wip: FiberNode) => {
+	const context = wip.type._context
+	const nextProps = wip.pendingProps
+
+	pushProvider(context, nextProps.value)
+
+	const nextChildren = nextProps.children
 	reconcileChildren(wip, nextChildren)
 	return wip.child
 }
