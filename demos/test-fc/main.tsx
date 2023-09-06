@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 
 // function App() {
@@ -94,22 +94,43 @@ import ReactDOM from 'react-dom/client'
 // 	return 'i am child'
 // }
 
+// function App() {
+// 	const [num, update] = useState(100)
+// 	return (
+// 		<ul onClick={() => update(50)}>
+// 			{new Array(num).fill(0).map((_, i) => {
+// 				return <Child key={i}>{i}</Child>
+// 			})}
+// 		</ul>
+// 	)
+// }
+
+// function Child({ children }) {
+// 	const now = performance.now()
+// 	// eslint-disable-next-line no-empty
+// 	while (performance.now() - now < 4) {}
+// 	return <li>{children}</li>
+// }
+
 function App() {
-	const [num, update] = useState(100)
+	const [isDel, del] = useState(false)
+	const divRef = useRef(null)
+
+	console.log('render divRef', divRef.current)
+
+	useEffect(() => {
+		console.log('useEffect divRef', divRef.current)
+	}, [])
+
 	return (
-		<ul onClick={() => update(50)}>
-			{new Array(num).fill(0).map((_, i) => {
-				return <Child key={i}>{i}</Child>
-			})}
-		</ul>
+		<div ref={divRef} onClick={() => del(true)}>
+			{isDel ? null : <Child />}
+		</div>
 	)
 }
 
-function Child({ children }) {
-	const now = performance.now()
-	// eslint-disable-next-line no-empty
-	while (performance.now() - now < 4) {}
-	return <li>{children}</li>
+function Child() {
+	return <p ref={(dom) => console.log('dom is:', dom)}>Child</p>
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<App />)

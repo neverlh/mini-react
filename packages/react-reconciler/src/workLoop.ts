@@ -20,6 +20,7 @@ import {
 	commitHookEffectListCreate,
 	commitHookEffectListDestroy,
 	commitHookEffectListUnmount,
+	commitLayoutEffects,
 	commitMutationEffects
 } from './commitWork'
 import {
@@ -313,6 +314,7 @@ const commitRoot = (root: FiberRootNode) => {
 		root.current = finishedWork
 
 		// layout
+		commitLayoutEffects(finishedWork, root)
 	} else {
 		root.current = finishedWork
 	}

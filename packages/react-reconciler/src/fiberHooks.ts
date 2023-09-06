@@ -238,11 +238,19 @@ const startTransition = (
 	ReactCurrentBatchConfig.transition = prevTransition
 }
 
+const mountRef = <T>(initialValue: T) => {
+	const hook = mountWorkInProgressHook()
+	const ref = { current: initialValue }
+	hook.memoizedState = ref
+	return ref
+}
+
 /** mount时 hooks集合 */
 const HooksDispatcherOnMount: Dispatcher = {
 	useState: mountState,
 	useEffect: mountEffect,
-	useTransition: mountTransition
+	useTransition: mountTransition,
+	useRef: mountRef
 }
 
 /** update useState */
@@ -400,8 +408,14 @@ const updateTransition = (): [boolean, (callback: () => void) => void] => {
 	return [isPending as boolean, start]
 }
 
+const updateRef = () => {
+	const hook = updateWorkInProgressHook()
+	return hook.memoizedState
+}
+
 const HooksDispatcherOnUpdate: Dispatcher = {
 	useState: updateState,
 	useEffect: updateEffect,
-	useTransition: updateTransition
+	useTransition: updateTransition,
+	useRef: updateRef
 }

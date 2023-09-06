@@ -27,6 +27,11 @@ export const useTransition: Dispatcher['useTransition'] = () => {
 	return dispatcher.useTransition()
 }
 
+export const useRef: Dispatcher['useRef'] = (initialValue) => {
+	const dispatcher = resolveDispatcher()
+	return dispatcher.useRef(initialValue)
+}
+
 export default {
 	version: '0.0.0',
 	createElement

@@ -11,6 +11,7 @@ import {
 import { mountChildFiber, reconcileChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
 import { Lane } from './fiberLanes'
+import { Ref } from './fiberFlags'
 
 /**
  * 传入当前Fiber节点，创建子Fiber节点
@@ -72,6 +73,7 @@ const updateHostRoot = (wip: FiberNode, renderLane: Lane) => {
 const updateHostComponent = (wip: FiberNode) => {
 	const nextProps = wip.pendingProps
 	const nextChildren = nextProps.children
+	markRef(wip.alternate, wip)
 	reconcileChildren(wip, nextChildren)
 	return wip.child
 }
@@ -85,5 +87,17 @@ const reconcileChildren = (wip: FiberNode, children?: ReactElementType) => {
 	} else {
 		// mount 创建新的fiber节点
 		wip.child = mountChildFiber(wip, null, children)
+	}
+}
+
+const markRef = (current: FiberNode | null, wip: FiberNode) => {
+	const ref = wip.ref
+	// 此处的ref代表的是jsx上的ref属性的值
+	if (
+		(current === null && ref !== null) ||
+		(current !== null && current.ref !== ref)
+	) {
+		// mount时ref存在或者update时ref变化
+		wip.flags |= Ref
 	}
 }

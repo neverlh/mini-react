@@ -2,8 +2,7 @@ export type ElementType = any
 
 export type Key = any
 
-// export type Ref = { current: null } | ((instance: any) => void)
-export type Ref = any
+export type Ref = { current: null } | ((instance: any) => void)
 
 export type Props = any
 

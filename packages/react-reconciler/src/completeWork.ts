@@ -12,10 +12,14 @@ import {
 	HostText,
 	Fragment
 } from './workTags'
-import { NoFlags, Update } from './fiberFlags'
+import { NoFlags, Ref, Update } from './fiberFlags'
 
 const markUpdate = (fiber: FiberNode) => {
 	fiber.flags |= Update
+}
+
+const markRef = (fiber: FiberNode) => {
+	fiber.flags |= Ref
 }
 
 /**
@@ -38,12 +42,18 @@ export const completeWork = (wip: FiberNode) => {
 				// 2. 变了 Update flag
 				// className style
 				markUpdate(wip)
+				if (wip.ref !== current.ref) {
+					markRef(wip)
+				}
 			} else {
 				// 构建dom
 				const instance = createInstance(wip.type, newProps)
 				// 插入DOM树中
 				appendAllChildren(instance, wip)
 				wip.stateNode = instance
+				if (wip.ref !== null) {
+					markRef(wip)
+				}
 			}
 			bubbleProperties(wip)
 			return null
