@@ -47,7 +47,7 @@ const RootCompleted = 2
 
 /** 调度fiber节点上的更新 => ReactDOM.render setState ReactDOM.createRoot().render() 会触发*/
 export const scheduleUpdateOnFiber = (fiber: FiberNode, lane: Lane) => {
-	const root = markUpdateFromFiberToRoot(fiber)
+	const root = markUpdateLaneFromFiberToRoot(fiber, lane)
 
 	markRootUpdated(root, lane)
 	ensureRootIsScheduled(root)
@@ -113,11 +113,18 @@ const ensureRootIsScheduled = (root: FiberRootNode) => {
 }
 
 /** 将更新冒泡到fiberRootNode上 react每次更新递归都是从fiberRootNode开始 */
-const markUpdateFromFiberToRoot = (fiber: FiberNode) => {
+const markUpdateLaneFromFiberToRoot = (fiber: FiberNode, lane: Lane) => {
 	let node = fiber
 	let parent = node.return
 
 	while (parent !== null) {
+		// 保存每个fiber都能知道他的子fiber有没有更新
+		parent.childLanes = mergeLanes(parent.childLanes, lane)
+		const alternate = parent.alternate
+		if (alternate !== null) {
+			alternate.childLanes = mergeLanes(alternate.childLanes, lane)
+		}
+
 		node = parent
 		parent = node.return
 	}

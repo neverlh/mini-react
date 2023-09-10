@@ -43,7 +43,9 @@ export const updateContainer = (
 		const update = createUpdate<ReactElementType | null>(element, lane)
 		enqueueUpdate(
 			hostRootFiber.updateQueue as UpdateQueue<ReactElementType | null>,
-			update
+			update,
+			hostRootFiber,
+			lane
 		)
 		// 调度该fiber节点上的更新
 		scheduleUpdateOnFiber(hostRootFiber, lane)

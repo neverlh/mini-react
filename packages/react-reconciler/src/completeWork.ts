@@ -15,6 +15,7 @@ import {
 } from './workTags'
 import { NoFlags, Ref, Update } from './fiberFlags'
 import { popProvider } from './fiberContext'
+import { NoLanes, mergeLanes } from './fiberLanes'
 
 const markUpdate = (fiber: FiberNode) => {
 	fiber.flags |= Update
@@ -135,18 +136,23 @@ const appendAllChildren = (parent: Container, wip: FiberNode) => {
  */
 const bubbleProperties = (wip: FiberNode) => {
 	let subtreeFlags = NoFlags
-
 	let child = wip.child
+	let newChildLanes = NoLanes
 
 	while (child !== null) {
 		subtreeFlags |= child.subtreeFlags
-
 		subtreeFlags |= child.flags
 
 		child.return = wip
+
+		newChildLanes = mergeLanes(
+			newChildLanes,
+			mergeLanes(child.lanes, child.childLanes)
+		)
 
 		child = child.sibling
 	}
 
 	wip.subtreeFlags |= subtreeFlags
+	wip.childLanes = newChildLanes
 }

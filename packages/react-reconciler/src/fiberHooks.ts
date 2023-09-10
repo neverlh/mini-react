@@ -7,15 +7,24 @@ import { FiberNode } from './fiber'
 import {
 	Update,
 	UpdateQueue,
+	basicStateReducer,
 	createUpdate,
 	createUpdateQueue,
 	enqueueUpdate,
 	processUpdateQueue
 } from './updateQueue'
 import { scheduleUpdateOnFiber } from './workLoop'
-import { Lane, NoLane, requestUpdateLane } from './fiberLanes'
+import {
+	Lane,
+	NoLane,
+	mergeLanes,
+	requestUpdateLane,
+	removeLanes,
+	NoLanes
+} from './fiberLanes'
 import { Flags, PassiveEffect } from './fiberFlags'
 import { HookHasEffect, Passive } from './hookEffectTags'
+import { markWipReceiveUpdate } from './beginWork'
 
 /** 当前正在执行hooks的FunctionComponent的fiber */
 let currentlyRenderingFiber: FiberNode | null = null
@@ -50,6 +59,7 @@ export interface Effect {
 /** FC fiber updateQueue 存放所有effect的链表 方便在收集effect 不需要遍历hook链表 */
 export interface FCUpdateQueue<State> extends UpdateQueue<State> {
 	lastEffect: Effect | null
+	lastRenderedState: State
 }
 
 export const renderWithHooks = (wip: FiberNode, lane: Lane) => {
@@ -86,6 +96,14 @@ export const renderWithHooks = (wip: FiberNode, lane: Lane) => {
 	return children
 }
 
+export const bailoutHook = (wip: FiberNode, renderLane: Lane) => {
+	const current = wip.alternate as FiberNode
+	wip.updateQueue = current.updateQueue
+	wip.flags &= ~PassiveEffect
+
+	current.lanes = removeLanes(current.lanes, renderLane)
+}
+
 /** mount => useState */
 const mountState = <State>(
 	initialState: (() => State) | State
@@ -101,7 +119,7 @@ const mountState = <State>(
 		memoizedState = initialState
 	}
 
-	const queue = createUpdateQueue<State>()
+	const queue = createFCUpdateQueue<State>()
 	hook.updateQueue = queue
 	hook.memoizedState = memoizedState
 	hook.baseState = memoizedState
@@ -109,6 +127,7 @@ const mountState = <State>(
 	// @ts-ignore
 	const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber, queue)
 	queue.dispatch = dispatch
+	queue.lastRenderedState = memoizedState
 
 	return [memoizedState, dispatch]
 }
@@ -119,12 +138,34 @@ const mountState = <State>(
  * */
 const dispatchSetState = <State>(
 	fiber: FiberNode,
-	updateQueue: UpdateQueue<State>,
+	updateQueue: FCUpdateQueue<State>,
 	action: Action<State>
 ) => {
 	const lane = requestUpdateLane()
 	const update = createUpdate(action, lane)
-	enqueueUpdate(updateQueue, update)
+
+	const current = fiber.alternate
+	if (
+		fiber.lanes === NoLanes &&
+		(current === null || current.lanes === NoLanes)
+	) {
+		// 当前产生的update是这个fiber的第一个update
+		// 1. 更新前的状态 2.计算状态的方法
+		const currentState = updateQueue.lastRenderedState
+		const eagarState = basicStateReducer(currentState, action)
+		update.hasEagerState = true
+		update.eagerState = eagarState
+
+		if (Object.is(currentState, eagarState)) {
+			enqueueUpdate(updateQueue, update, fiber, NoLane)
+			// 命中eagerState
+			if (__DEV__) {
+				console.warn('命中eagerState', fiber)
+			}
+			return
+		}
+	}
+	enqueueUpdate(updateQueue, update, fiber, lane)
 	scheduleUpdateOnFiber(fiber, lane)
 }
 
@@ -267,7 +308,7 @@ const HooksDispatcherOnMount: Dispatcher = {
 const updateState = <State>(): [State, Dispatch<State>] => {
 	const hook = updateWorkInProgressHook()
 
-	const queue = hook.updateQueue as UpdateQueue<State>
+	const queue = hook.updateQueue as FCUpdateQueue<State>
 	const pending = queue.shared.pending
 
 	const current = currentHook as Hook
@@ -297,14 +338,28 @@ const updateState = <State>(): [State, Dispatch<State>] => {
 	}
 
 	if (baseQueue !== null) {
+		const prevState = hook.memoizedState
 		const {
 			memoizedState,
 			baseQueue: newBaseQueue,
 			baseState: newBaseState
-		} = processUpdateQueue(baseState, baseQueue, renderLane)
+		} = processUpdateQueue(baseState, baseQueue, renderLane, (update) => {
+			// 被跳过的lane需要重新加回去 beginWork的时候有赋值NoLanes
+			const skippedLane = update.lane
+			const fiber = currentlyRenderingFiber as FiberNode
+			fiber.lanes = mergeLanes(fiber.lanes, skippedLane)
+		})
+
+		// state计算 值不想等 FC则需要进入render
+		if (!Object.is(prevState, memoizedState)) {
+			markWipReceiveUpdate()
+		}
+
 		hook.memoizedState = memoizedState
 		hook.baseQueue = newBaseQueue
 		hook.baseState = newBaseState
+
+		queue.lastRenderedState = memoizedState
 	}
 
 	return [hook.memoizedState, queue.dispatch as Dispatch<State>]

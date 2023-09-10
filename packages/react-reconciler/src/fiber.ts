@@ -59,6 +59,11 @@ export class FiberNode {
 	/** 删除子fiber合集 */
 	deletions: FiberNode[] | null = null
 
+	/** 当前fiber上触发的更新 用于bailout策略 */
+	lanes: Lanes = NoLanes
+	/** 当前fiber子树上触发的更新 用于bailout策略 */
+	childLanes: Lanes = NoLanes
+
 	constructor(
 		public tag: WorkTags,
 		/** 即将更新的props */
@@ -137,6 +142,9 @@ export const createWorkInProgress = (
 	wip.memoizedProps = current.memoizedProps
 	wip.memoizedState = current.memoizedState
 	wip.ref = current.ref
+
+	wip.lanes = current.lanes
+	wip.childLanes = current.childLanes
 
 	return wip
 }
